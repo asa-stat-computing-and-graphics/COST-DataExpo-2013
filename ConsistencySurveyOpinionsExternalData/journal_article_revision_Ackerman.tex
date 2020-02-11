@@ -1,0 +1,421 @@
+%%%%%%%%%%%%%%%%%%%%%%% file template.tex %%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% This is a general template file for the LaTeX package SVJour3
+% for Springer journals.          Springer Heidelberg 2010/09/16
+%
+% Copy it to a new file with a new name and use it as the basis
+% for your article. Delete % signs as needed.
+%
+% This template includes a few options for different layouts and
+% content for various journals. Please consult a previous issue of
+% your journal as needed.
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% First comes an example EPS file -- just ignore it and
+% proceed on the \documentclass line
+% your LaTeX  extract the file if required
+\begin{filecontents*}{example.eps}
+%!PS-Adobe-3.0 EPSF-3.0
+%%BoundingBox: 19 19 221 221
+%%CreationDate: Mon Sep 29 1997
+%%Creator: programmed by hand (JK)
+%%EndComments
+gsave
+newpath
+  20 20 moveto
+  20 220 lineto
+  220 220 lineto
+  220 20 lineto
+closepath
+2 setlinewidth
+gsave
+  .4 setgray fill
+grestore
+stroke
+grestore
+\end{filecontents*}
+%
+\RequirePackage{fix-cm}
+%
+%\documentclass{svjour3}                     % onecolumn (standard format)
+%\documentclass[smallcondensed]{svjour3}     % onecolumn (ditto)
+\documentclass[smallextended, hidelinks]{svjour3}       % onecolumn (second format)
+%\documentclass[twocolumn]{svjour3}          % twocolumn
+%
+\smartqed  % flush right qed marks, e.g. at end of proof
+%
+\usepackage{graphicx}
+\setlength{\parindent}{15pt}
+\usepackage{hyperref}
+\hypersetup{
+    colorlinks, linkcolor={blue},
+    citecolor={blue}, urlcolor={blue}
+}
+\usepackage{booktabs}%%
+\usepackage{caption}
+\usepackage{multirow}
+\captionsetup{justification=raggedright}
+\usepackage[authoryear]{natbib}
+
+%probably want to get rid of titles in plots
+%
+% \usepackage{mathptmx}      % use Times fonts if available on your TeX system
+%
+% insert here the call for the packages your document requires
+%\usepackage{latexsym}
+% etc.
+%
+% please place your own definitions here and don't use \def but
+% \newcommand{}{}
+%
+% Insert the name of "your journal" with
+\journalname{Comput Stat}
+%
+\begin{document}
+
+\title{Consistency of Survey Opinions and External Data
+\thanks{The author wishes to thank Dr. Richard M. Heiberger, Professor Emeritus at the Department of Statistics, Temple University, for his guidance in preparing this paper and associated poster (\citealt{poster}), as well as in designing the \texttt{R} package \texttt{mapStats} used to produce the maps in this paper.}
+%\thanks{Grants or other notes
+%about the article that should go on the front page should be
+%placed here. General acknowledgments should be placed at the end of the article.}
+}
+%\subtitle{Do you have a subtitle?\\ If so, write it here}
+
+%\titlerunning{Short form of title}        % if too long for running head
+
+%\author{First Author         \and
+%        Second Author %etc.
+%}
+
+\author{Samuel Ackerman  }
+
+%\authorrunning{Short form of author list} % if too long for running head
+
+\institute{S.Ackerman \at
+              388 Speakman Hall, Department of Statistics, Temple University, Philadelphia, PA\\
+ %             Tel.: +123-45-678910\\
+   %           Fax: +123-45-678910\\
+              \email{ackerman@temple.edu}           %  \\
+%             \emph{Present address:} of F. Author  %  if needed
+%           \and
+%           S. Author \at
+%              second address
+}
+
+\date{Received: date / Accepted: date}
+% The correct dates will be entered by the editor
+
+
+\maketitle
+
+\begin{abstract}
+The Soul of the Community Survey was conducted in 26 communities in the United States in the years 2008, 2009, and 2010.  Respondents were asked to rate their community in terms of quality of life, social offerings, and other aspects to determine 
+the qualities that cause people to be most attached to their community.  This paper focuses on describing the geographic distribution of responses to several of the questions within one of the communities, Long Beach, CA.  We first provide a general description of the
+city and compare the geographic distribution of population, income, and race of survey respondents with external data.  With this demographic profile in mind, we analyze respondents' ratings on local safety, availability of green spaces, and quality of local public schools
+to see if they are consistent with external data sources.  In the case of public school quality, where these ratings appear inconsistent, we propose an explanation to resolve this.  This work is based on a poster submitted to the 2013 Data Expo competition held at the 
+Joint Statistical Meetings in Montreal, Canada (\citealt{Call}).
+  
+\keywords{ASA data exposition 2013 \and Survey analysis  \and Geographic analysis \and R package \and map \and mapStats}
+%\keywords{First keyword \and Second keyword \and More}
+% \PACS{PACS code1 \and PACS code2 \and more}
+% \subclass{MSC code1 \and MSC code2 \and more}
+\end{abstract}
+
+\section{Introduction}
+\label{intro}
+
+The Soul of the Community Survey was conducted jointly by Gallup and the Knight Foundation in the years 2008, 2009, and 2010.  Over the three years, approximately 43,000 people in 26 U.S. communities were interviewed and asked to rate various aspects of their community, such as confidence in the government and police, social interaction with neighbors, and entertainment options.  The purpose of the survey was to use these responses to describe the qualities of communities that foster the strongest local attachments for residents.  The communities in the survey were scattered across the US and included both large and small cities (such as Philadelphia, PA, and Gary, IN).  The communities selected were ones where the Knight Foundation is active, but were not meant to comprise a nationally representative sample.  Within each community, however, responses were weighted to ensure a representative sample in terms of age, sex, race, ethnicity, and education (\citealt{KFDoc}).\\
+\indent
+In addition to comparing respondents' opinions across communities---which was one of the survey's stated goals (\citealt[p. 10]{KFReport})---we can examine a specific community to see how respondents' opinions vary geographically within the city, and whether this variation can be attributed to demographic or other factors.
+Also, by comparing survey responses with external data sources, we can see if they appear consistent.  For instance, we examine the association by geography of opinions of safety or estimates of the crime level with actual crime rates.  These data consistency checks can confirm if survey data appear reasonable and can help assess whether the survey questions capture the intent of the survey writers.  For the topics we studied, external data was available for comparison, but for other more abstract questions that the survey asks about---such as how much members of the community care about each other, or how satisfied people are with their jobs---the survey may be the only data source.  By conducting consistency checks on topics for which we have external data, we may be able to assess whether data on topics for which we lack external sources are reasonable.  Inconsistencies between survey and external data may also happen due to differences in variable definitions, sampling, or other reasons, which we can investigate.\\
+\indent
+In this paper we focus our analysis on only one of these communities, Long Beach, CA.  We begin by describing the geographic distribution of the respondents by race and income, which will provide necessary background for the subsequent analysis of survey responses.  We will use external data to analyze the consistency of survey responses on three topics: local crime, availability of parks, and public school quality.  For the first two, we conclude the responses are consistent with the available data.  For school quality, we show the responses appear inconsistent with the data, but propose an explanation for this inconsistency.
+
+
+\subsection{\texttt{mapStats} package for \texttt{R}}
+
+The maps in the subsequent sections will demonstrate the use of a new \texttt{R} package, \texttt{mapStats} (\citealt{mapStats}), available for download on CRAN for versions of \texttt{R} 3.0.2 and later.  This package simplifies the automated geographic visualization of survey data by calculating sample statistics for a survey variable by geographic unit and optional class variables, and displaying a color-coded map.  The figures in this paper, for instance, show the proportion of respondents by zip code responding a certain way to a question (i.e., the mean of an indicator variable). \\
+\indent
+Visualizing statistics of survey variables on a map is a basic data analysis task when the data distribution can be spatially-related, such as with Census or environmental data.  This kind of analysis require flexible calculation of variable statistics, either weighted or unweighted, and with optional class variables.  Such functionality is available in the \texttt{survey} package (\citealt{SPack}; \citealt{SArt}) in \texttt{R}; these functions require the initial creation of a \texttt{svydesign} object and then a separate call to the function \texttt{svyby} for each statistic desired.  In the \texttt{mapStats} package, the function \texttt{calcStats} serves as a wrapper to these functions, allowing the user to calculate multiple statistics for multiple analysis variables and multiple class variables in one function call, without needing to know how to use the \texttt{survey} package functions.  In addition, \texttt{calcStats} also calculates the frequency of each class combination and has an additional argument (\texttt{cell.min}) which will not display any combinations for which the frequency is below a desired level. \\
+\indent
+Though \texttt{calcStats} can be used on its own, its primary job is to format the input variable statistics from \texttt{survey} package functions for use in the main function \texttt{mapStats}, which then plots the statistics on a color-coded map.  The primary innovation here is to allow the calculation of statistics and plotting of variables in a single function call of \texttt{mapStats}, which provides a wide set of options for visual formatting, as shown below.  This eliminates the need to manually manipulate matrices with variable statistics and for the user to be familiar with \texttt{lattice} mapping utilities, making this geographic analysis accessible to a first-time user of \texttt{R} mapping software.  An example of the use of the function to produce Figure~\ref{fig:parks} later in the paper follows.  The figure produced shows the weighted percent of respondents in each zip code who said that parks in their city were readily accessible (we assume people have their neighborhood in mind when answering this question); the figure also overlays with the actual locations of parks, for comparison.  In each of the examples in this paper, each call of \texttt{mapStats} produces only one map, but it can be used to make many graphs in one function call when multiple statistics, analysis variables, or class variables are involved, and when each class variable has many levels. 
+
+\begin{verbatim}
+#color parks shapefile by type of park 
+park1 <- list("sp.polygons", LBparks, 
+         fill=ifelse(LBparks$PK_TYPE=="GC", "DarkGreen", 
+         "LightGreen"))
+
+mapStats(d=na.omit(lb3yr[ ,c("qs3a","parks","weight")]), 
+  var="parks",  wt.var="weight", map.label=TRUE,
+  stat="mean", wt.label=FALSE, d.geo.var="qs3a", 
+  map.file=LB, map.geo.var="ZCTA5CE10", ngroups=5,
+  paletteName="Reds", style="jenks", 
+  titles="Percent saying park availability is high, by zip code", 
+  cell.min=3, cex.label=1.2 ,xlim=xbox, ylim=ybox, 
+  sp_layout.pars=list(park1), cex.title=1.5)
+\end{verbatim}
+
+\indent
+Initially, the object \texttt{park1} is created from a shapefile to color golf courses and other parks in the city.  In the function call to \texttt{mapStats}, the first three parameters indicate the dataset used, the analysis variable (each function call can only construct statistics for one variable, but can have multiple statistics), as well as an optional weight variable for the analysis variable.  Parameter \texttt{d.geo.var} specifies the dataset variable that is the geographic unit; parameter \texttt{by.var} (not used here) is a vector of optional class variables to calculate statistics by.  Parameter \texttt{stat} indicates that the mean is to be calculated, since the analysis variable is binary; if quantiles are desired, they are indicated in the parameter \texttt{quantiles}.  Parameters \texttt{map.label} and \texttt{wt.label} control whether the map will have geographic units labeled and whether the titles will indicate the statistics are weighted or not.  The function produces reasonable default titles (additional parameters are available to rename variables in the titles if desired), but here we override the default ones by providing a desired title in the \texttt{titles} parameter.  Parameter \texttt{map.file} is the shapefile to use for the map, and \texttt{map.geo.var} is the geographic unit variable in the shapefile's associated dataset; this prevents having to rename either \texttt{map.geo.var} or the geographic variable in the original data objects.  
+\\\indent
+Parameter \texttt{ngroups} specifies the number of groups to break the range of the statistics' values when determining the color coding.  The method for calculating the breaks is specified by \texttt{style}, and \texttt{paletteName} is the color palette to use; there is flexibility to allow user-provided color scales (parameter \texttt{colorVec}, not shown) and to let the palettes and \texttt{ngroups} vary for each statistic.  Parameter \texttt{separate} indicates whether the color breaks are to be calculated for each statistic or based on all of the statistic values calculated for all geographic units.  Parameter \texttt{cell.min} indicates the minimum number of non-missing observations a class combination (in this case, a zip code) needs to have in the data to be used for calculating color breaks; these combinations will be left in white in the resulting maps.  Parameters \texttt{cex.label} and \texttt{cex.title} control the size of map labels and titles.  Parameter \texttt{sp\_layout.pars} will overlay a spatial object created externally on each map.  Additional parameters are available for visual control, and other \texttt{lattice} parameters, such as \texttt{xlim}, \texttt{ylim} (here these two parameter values were specified outside of the function call), and \texttt{between} can be used to adjust spacing and arrangement of map panels.
+\\\indent
+The functions in the \texttt{mapStats} package greatly simplify a routine task for geographic data analysis that would require extensive code and manual manipulation, such as renaming variables, and lets the user flexibly control many visual aspects of the maps, without familiarity with \texttt{lattice} mapping utilities.  The included function \texttt{calcStats} can be used to calculate variable statistics by multiple class variable combinations without without mapping, as a wrapper to \texttt{survey} package functions.  Readers interested in further details should consult the demonstration file in the package, which reviews use of all of the parameters.
+\subsection{Demographics of Long Beach}
+The lowest-level geographic identifier available in the survey is the five-digit zip code.  Long Beach was selected as the focus of this analysis because it was the only community for which the zip code identifier was non-missing.  The Long Beach city boundaries contain 13 zip codes, but two of these (90822 and 90831) were excluded from analysis because of their small size and had one or no responses in the survey sample.  For this paper, the sample from Long Beach across all three years (containing about 400 responses in each year) were aggregated, providing 1,208 reponses, and ensuring a large enough sample from each zip code.\\
+\indent
+Long Beach is located on the Pacific coast south of Los Angeles, and, as of 2011, is the seventh largest city in California (\citealt{CADoF}), with an estimated population of 467,892 in 2012 (\citealt{CenFacts}).  Racially, it is fairly diverse, with 40.8\% of the population Hispanic or Latino and 13.5\% African American, compared to 37.6\% and 6.2\%, respectively,
+for the state overall (\citealt{CenFacts}).  The shipping port of Long Beach, the second-busiest in the nation, is a major source of economic activity, and supports 30,000 jobs in the city (\citealt{LBPort}).  Figure~\ref{fig:LBmap} shows the city layout and surrounding areas.  We see the city completely encompasses the town of Signal Hill, and that the port and airport 
+occupy large plots of land in the southwest and center of the city.  The northwestern corner of the city borders the town of Compton, CA, which is highly-populated by African Americans and Hispanics (\citealt{CenFacts}) and is a center of gang crime.
+
+\begin{figure}
+  \centering
+  \includegraphics[width=.9\linewidth]{area_map.pdf}
+\caption{Long Beach and surrounding areas, showing the city's zip codes, only eleven of which were used in this analysis.  The bordering town of Compton is a major center of gang crime.  The city's port is a major center of economic activity.}
+\label{fig:LBmap}       
+\end{figure}
+
+To ensure comparability between the survey sample sizes by zip code, population estimates for 2010 by zip code from the US Census were used.  That the survey and Census population distributions are fairly similar suggests the survey sample can be used reasonably to approximate the actual population distribution.  By analyzing the zip code-level distribution of income and race as reported in the survey, we see there is a stark demographic divide within the city. The western areas tend to have low income and a higher proportion of racial minorities (Figure~\ref{fig:nonwhite} and the Likert plot (see \citealt{HHpackage}) in Figure~\ref{fig:LBincome}), whereas the eastern areas have high income and have a population that is mostly white.  Respondents reported their income as belonging to one of eight income ranges, rather than as a number.
+%Table~\ref{table:PopComp} shows that the weighted distribution of respondents by zip codes matches well with the population distribution from the Census. 
+
+
+\begin{table}
+\begin{center}
+\begin{tabular}{c|rrrr}
+ \toprule
+ \multirow{2}{*}{Zip code} & \multicolumn{2}{c}{Respondents} & \multirow{2}{*}{Weighted Percent} & \multirow{2}{*}{Approx. Pop. (\%)} \\
+ %\cline{2-3}
+  & Count & Percent & &  \\ 
+\hline
+ 90802 & 122 & 10.10 & 9.65 & 8.71 \\ 
+ 90803 & 162 & 13.41 & 8.46 & 7.09 \\ 
+ 90804 &  87 & 7.20 & 9.80 & 8.92 \\ 
+ 90805 & 122 & 10.10 & 14.72 & 20.69 \\ 
+ 90806 &  86 & 7.12 & 8.74 & 9.38 \\ 
+ 90807 & 128 & 10.60 & 8.77 & 6.97 \\ 
+ 90808 & 184 & 15.23 & 11.85 & 8.46 \\ 
+ 90810 &  44 & 3.64 & 4.41 & 3.71 \\ 
+ 90813 &  89 & 7.37 & 10.46 & 13.03 \\ 
+ 90814 &  74 & 6.13 & 5.31 & 4.23 \\ 
+ 90815 & 109 & 9.02 & 7.80 & 8.79 \\ 
+ 90822 &   1 & 0.08 & 0.03 & 0.03 \\ 
+\bottomrule
+\end{tabular}
+\end{center}
+\caption{Population distribution in Long Beach, CA, by zip code: raw respondent counts and percents (columns 2--3) and totals using the survey weight (4) for all three surveys.  For comparison, the distribution of total population age 16 and older from the 2010 US Census (5) is shown.  The Census numbers (reported by zip code) were approximated for the 90810 zip code, half of which is in the bordering city of Carson, using the proportion of area in the zip code within the Long Beach city boundary.}        
+\label{table:PopComp}
+\end{table}
+
+
+\begin{figure}
+  \centering
+  \includegraphics[width=0.9\linewidth]{race_map.pdf}
+\caption{Distribution of self-reported racial minority status by zip code.  The western areas of the city have much higher proportions of racial minorities than the eastern parts do.}
+\label{fig:nonwhite}       
+\end{figure}
+\vspace{10mm}
+\begin{figure}
+  \centering
+  \includegraphics[width=0.9\linewidth]{income_zipcode2.pdf}
+\caption{Income distribution by zip code. The red shadings on the right axis are the colors from Figure~\ref{fig:nonwhite}, where darker red means a higher proportion of residents are Hispanic or non-white race.  The blue horizontal bars each sum to 100 and show the proportion of the population in each zip code belonging to each income category.  The bars are aligned so that the zero tick mark separates the population proportions with income below and above \$75,000, and thus the degree of staggering allows the skewness in the income distribution in different zip codes to be compared.  The corresponding red squares show that a higher proportion of racial minorities (darker red) is associated with a higher proportion of respondents earning lower incomes, by zip code.}  
+\label{fig:LBincome}       
+\end{figure}
+
+
+
+\section{Respondent Perceptions}
+
+The bulk of the survey consists of questions asking for respondents' opinions on various aspects of their community.  The definition of `community' in the questions was left up to the respondent (according to communication from the survey administrators), so when answering a question a respondent could have in mind either their neighborhood or the city overall, for instance. We have demonstrated that the survey sample seems representative by comparing the distribution of respondents by zip code with Census totals, and have established basic facts about the income and racial distribution within the city.  Keeping these demographic facts in mind, we want to see whether inferences about the city based on respondents' opinions seem to agree with external data from official sources; if the comparison shows a difference we propose possible explanations.
+
+\subsection{Perceptions of Local Crime}
+
+The survey asks several different questions about respondents' perceptions of local crime.  Respondents are asked to say how safe they feel walking alone at night within a mile of their home, to rate the level of crime in their community, and to assess whether local crime has increased or decreased in recent years.  For this analysis, we will focus on the first two questions only.  \\
+\indent
+The question of whether people have an accurate idea of how high local crime is is a topic of much debate in the sociology literature.  For instance, Quillian and Pager \citeyearpar[pp. 79]{Quil10} combine survey data on crime victimization with actual crime data from respondents' local areas, and conclude that people tend to highly overestimate the risk of victimization, and that neighborhood racial characteristics significantly influence these perceptions but do not affect actual victimization rates significantly. Figure~\ref{fig:crimemap} shows that the distributions by zip code of respondents who reported feeling unsafe walking alone, or who assessed the local crime level as high, are similar. Moreover, respondents living in the western zip codes, where the populations are overall lower-income and have more racial minorities, were most likely to report feeling unsafe or to rate crime as high.  This is particularly true in the 90805 zip code which borders the high-crime town of Compton.
+
+\begin{figure}
+\centering
+\includegraphics[width=0.9\linewidth]{crime_map.pdf}
+\includegraphics[width=0.9\linewidth]{unsafe_map.pdf}
+\caption{Crime level and safety perception by zip code.  The red triangles and black square link these plots to the regression plots in Figure~\ref{fig:crimereg}.}
+\label{fig:crimemap}    
+\end{figure}
+
+We compare respondents' perceptions of (1) the crime levels and (2) their assessment of how safe they feel walking around, to data on actual crime counts from the Long Beach Police Department; these data, from 2010, are classified by the police as committed either against persons or against property.  Crime totals are reported for 281 reporting districts (RDs) throughout the city.  These RDs are small areas whose borders do not coincide with the zip code boundaries, and hence an RD may overlap with multiple zip codes.  An approximation of total crime by zip code for each of the two crime categories was calculated using shapefiles of the RD boundaries (\citealt{LBData}) and splitting each RD's crime count among zip codes in proportion to the amount of the RD area overlapping with each zip code. The estimates of crime totals were then converted to per capita crime rates by zip code using the 2010 Census population estimates.\\
+\indent
+We used linear regression to analyze the association between per capita crime rates against persons or property, and the percent of respondents by zip code having unfavorable perceptions of local crime by either metric 1 or 2.  The results were similar for both crimes against property and persons, so we only show only the plots for crimes against persons.  Figure~\ref{fig:crimereg} shows that the association by zip code between crimes against persons per capita was not statistically significant for the percent of respondents saying the crime rate was high (metric 1) but was statistically significant for the percent saying they felt unsafe at night (metric 2).  This is reasonable because metric 1 asks about the level of crime in one's community. Because the survey does not specifically define `community,' when thinking of one's community, a respondent may think of the city overall rather than their neighborhood.  Therefore, if respondents have differing definitions of their `community,' the association between crime rates by zip code and the percent saying crime is high may be blurred.  Metric 2 asks about safety conditions specifically around one's home, so there should be a stronger association here with local crime rates.  We conclude that this metric of crime perception derived from respondent opinions is consistent with the external data on crime rates.
+
+\begin{figure}
+\centering
+
+  \includegraphics[width=0.9\linewidth]{crime_person_byzip2.pdf}
+  \includegraphics[width=0.9\linewidth]{safety_person_byzip2.pdf}
+  \caption{Association between actual crimes against persons per capita and metrics of crime perception: percent saying
+  crime is bad (top), and the percent saying they feel unsafe at night (bottom).  Only the second regression has a statistically significant slope.}
+  \label{fig:crimereg}    
+\end{figure}
+
+\subsection{Perceptions of Green Spaces}
+
+The survey asks respondents to rate the overall beauty of the community, the quality of local institutions and amenities (such as public schools and entertainment venues), and the more abstract social metrics, such as how easy it is to make friends.  One of the metrics that we have data available for comparison is respondents' rating of the availability of `outdoor parks, playgrounds, and trails.'  Using maps provided from the city government showing the locations of all parks (\citealt{LBData}), we can see if zip codes where more respondents reported the availability of parks to be high actually have more parks in them.\\  
+\indent
+Figure~\ref{fig:parks} shows that the association between actual park locations and respondent perceptions of their availability is relatively consistent.  The eastern zip codes, which are the more wealthy areas, have the bulk of the parks, including golf courses.  Respondents in these zip codes were most likely to say green spaces were available, but we also see that, for instance, respondents in zip code 90813 also rated park availability highly but there are few parks there.  Golf courses are shown in dark green, while other parks are in light green.  Though golf courses are not open to the public, their mere presence may still influence perceptions of park availability.  In any case, the golf courses are located in the wealthy areas, as expected.  We see that respondent opinions of park availability appear consistent with external data on actual park locations.
+
+\begin{figure}
+  \centering
+  \includegraphics[width=0.9\linewidth]{park_map.pdf}
+\caption{Locations of parks in Long Beach. Dark green indicates golf courses, light green is other parks.}
+\label{fig:parks}       
+\end{figure}
+
+\subsection{Perceptions Public School Quality}
+
+The survey asks respondents to assess the overall quality of public schools in the community.  The Long Beach School District has received positive reviews from the outside for school quality.  For instance, in 2003 it won the Broad Prize for Urban Education, which recognizes ``urban school districts that demonstrate the greatest overall performance and improvement in student achievement while reducing achievement gaps among low-income and minority students'' (\citealt{BroadPrize}).  It has also been a finalist for the award in several other years.\\ 
+\indent
+We compare respondents' opinions to external measures on school quality to see if the zip codes where respondents rated schools highly actually have schools that perform better.  The measure of school quality we use is the Academic Performance Index (API), an annual score given to all public schools in the state by the California Department of Education.  The API is a number ranging from 200 (low) to 1000 (high), based on a combination of statewide assessments, and is calculated at the state, school district, and school level overall and for various subgroups within each level, such as for African American students within each school.  Each year, a target API score is set for each level and group, and schools and districts are evaluated based on whether and for which subgroups the target was attained (\citealt{CADoE}).  Though API is not a complete measure of school quality, as it is based only on academic performance rather than abstract qualities, it is the best measure available since it is broad and covers every public school annually.\\
+\indent 
+Unfortunately, much of the information relevant to respondents' attitudes on schools is not available in the survey.  We do know how many dependent children a respondent has, and what age ranges they are in.  The survey, due in part to its limited scope, does not ask whether the children attend public schools, or where.  The school district was also unable to provide data or anecdotal evidence as to how many school-aged students living in the city attend private schools, schools outside of the school district, or schools located outside of their neighborhood (for instance, in different zip codes).  Nevertheless, assuming that API is a reasonable measure of school quality, the response patterns to this question yield some surprising results.\\
+\indent
+Figure~\ref{fig:schoolmap} shows the percentage of respondents by zip code who agreed that the overall quality of public schools in their community was good.  Respondents in the western areas of the city, which have more racial minorities and a poorer population, were much more likely to rate their local public schools highly.  Figure~\ref{fig:schoolreg} shows a regression of the proportion of respondents by zip code who rated schools highly on the median API of schools in the zip code.  Surprisingly, respondent opinions are exactly the opposite of what the API measure indicates about school quality.  The linear regression estimate is negative and highly statistically significant; using the mean API, which was also highly significant, instead of the median, gives a similar result.  That is, the zip codes where respondents were most likely to rate schools highly were the ones where the median API for schools in the zip code was the lowest.  The red squares to the right of the plot show the corresponding colors from Figure~\ref{fig:schoolmap} for each zipcode to reinforce this point, as the red shades go steadily from dark (more likely to rate schools highly) to light.\\
+\begin{figure}
+\centering
+\includegraphics[width=0.9\linewidth]{schools_map.pdf}
+\caption{Perception of public school quality by zip code.  The map shows that respondents in the western areas, which are also the lower-income ones, rate local public schools more highly.}
+\label{fig:schoolmap}
+\end{figure}
+\begin{figure}
+\centering
+\includegraphics[width=0.9\linewidth]{school_perception2.pdf} 
+\caption{Association between perceptions of public school quality by zip code and external ratings of quality (median API for schools in each zip code).  The slope is negative and highly statistically significant, indicating that zip codes where respondents rated schools most highly actually had the lowest-performing schools by the API measure. }
+\label{fig:schoolreg}    
+\end{figure}
+\indent
+The underlying cause behind this pattern seems to be income.  The blue shading of points in the regression plot corresponds to the percent of respondents by zip code reporting annual income of \$75,000 or higher.  The threshold of \$75,000 was chosen as a reasonable value to separate high and low incomes given the available income categories (see Figure~\ref{fig:LBincome}) and the city's median household income of \$52,711 (\citealt{CenFacts}). The regression plot thus shows, as expected, that zip codes with better performing public schools (higher median API) tend to have a wealthier population.\\
+\indent
+As mentioned before, we do not have survey or external data about public school attendance to indicate whether wealthier parents in Long Beach tend to send their children to private rather than public schools.  If it were true that wealthier parents seek out non-public school options for their children, this might explain the negative association since these parents would be more likely to either be uninformed or have negative opinions about the local schools.  \\
+\indent
+One possibility is that wealthier people simply have less regard for public education, particuarly on issues that primarily affect lower-income students.  A 2013 Public Policy Institute of California (PPIC) survey of state residents, in which respondents' incomes were categorized as either below \$40,000, between \$40,000 and \$80,000, or \$80,000 and above, confirms this.  Respondents with higher incomes were less likely (83\%, 68\%, 58\% in the above income categories, respectively) to support a budget plan by the governor to increase funding to schools with more low-income and English learner students (\citealt[p. 8]{Bal13}).  Wealthier respondents were also less likely (73\%, 62\%, 57\%) to view the high school dropout rate as a big problem, but were more likely to cite student achievement and teacher quality as problems (\citealt[p. 15]{Bal13}).  They were also less likely to say they were very concerned about lower-income students being less likely to go to college, that lower-income schools would have fewer quality teachers, and that English language learners would score lower on tests (\citealt[p. 18]{Bal13}).  Thus, schools in wealthier areas of Long Beach may have higher academic performance (as measured by the API) if they enroll more local students who are likely to come from families with higher socio-economic status.  However, people in these areas may think public schools are of lower quality overall if they view public education as an issue primarily affecting lower-income students, as the PPIC report suggests.
+
+
+
+
+
+\section{Conclusion}
+Using the subset of respondents from Long Beach, CA for the 2008, 2009, and 2010 Soul of the Community Survey, we investigate whether respondents' perceptions on the topics of local crime, availability of parks, and public school quality seem consistent with available external data sources.  An initial comparison of the distribution of respondents by zip code with actual population counts from the US Census shows the overall survey sampling by zip code appeared reasonable.  We also establish a basic profile of the zip codes by race and income to show a strong demographic divide within the city.  By comparing responses by zip code for each of the above topics with data from the governments of the City of Long Beach and State of California, we see that responses about crime and parks seemed consistent with the data, while opinions on school quality seemed contrary to the available data.  Such consistency checks are important for verifying if survey questions are being interpreted in the desired way, and can serve as a benchmark for topics for which external data is unavailable.
+
+%
+%\section{Section title}
+%%\label{sec:1}
+%%Text with citations \cite{RefB} and \cite{RefJ}.
+%\subsection{Subsection title}
+%%\label{sec:2}
+%%as required. Don't forget to give each section
+%%and subsection a unique label (see Sect.~\ref{sec:1}).
+%\paragraph{Paragraph headings} Use paragraph headings as needed.
+%\begin{equation}
+%a^2+b^2=c^2
+%\end{equation}
+%
+%% For one-column wide figures use
+%\begin{figure}
+%% Use the relevant command to insert your figure file.
+%% For example, with the graphicx package use
+%%  \includegraphics{example.eps}
+%% figure caption is below the figure
+%\caption{Please write your figure caption here}
+%\label{fig:1}       % Give a unique label
+%\end{figure}
+%%
+%% For two-column wide figures use
+%\begin{figure*}
+%% Use the relevant command to insert your figure file.
+%% For example, with the graphicx package use
+%%  \includegraphics[width=0.75\textwidth]{example.eps}
+%% figure caption is below the figure
+%\caption{Please write your figure caption here}
+%\label{fig:2}       % Give a unique label
+%\end{figure*}
+%%
+%% For tables use
+%\begin{table}
+%% table caption is above the table
+%\caption{Please write your table caption here}
+%\label{tab:1}       % Give a unique label
+%% For LaTeX tables use
+%\begin{tabular}{lll}
+%\hline\noalign{\smallskip}
+%first & second & third  \\
+%\noalign{\smallskip}\hline\noalign{\smallskip}
+%number & number & number \\
+%number & number & number \\
+%\noalign{\smallskip}\hline
+%\end{tabular}
+%\end{table}
+%
+%
+%%\begin{acknowledgements}
+%%If you'd like to thank anyone, place your comments here
+%%and remove the percent signs.
+%%\end{acknowledgements}
+%\bibliographystyle{apalike}
+% BibTeX users please use one of
+\bibliographystyle{spbasic}      % basic style, author-year citations
+%\bibliographystyle{spmpsci}      % mathematics and physical sciences
+%\bibliographystyle{spphys}       % APS-like style for physics
+%\bibliography{}   % name your BibTeX data base
+
+
+\bibliography{cite}
+%
+%% Non-BibTeX users please use
+%\begin{thebibliography}{}
+%%
+%% and use \bibitem to create references. Consult the Instructions
+%% for authors for reference list style.
+%%
+%%\bibitem{RefJ}
+%% Format for Journal Reference
+%%Author, Article title, Journal, Volume, page numbers (year)
+%
+%\bibitem[Ack13]{Ack13}
+%Ackerman, S (2013) mapStats: Geographic display of survey data statistics.
+%
+%\bibitem[Bal13]{Bal13}
+%Baldassare, M, Bonner D, Petek S, Shrestha J (2013) Californians and Education. Public Policy Institute of California.
+%
+%\bibitem[BroadPrize]{BroadPrize}
+%The Broad Prize for Urban Education (2013) About the Broad Prize.  Accessed 29 October 2013.
+%\url{http://www.broadprize.org/about/overview.html}.
+%
+%\bibitem[CADoF]{CADoF}
+%California Department of Finance (2011) 2011 City Population Rankings. Accessed 12 September 2013.
+%\url{http://www.cacities.org/UploadedFiles/LeagueInternet/59/59c32753-9e10-4662-8b7b-d1fe6bcea4ba.pdf}.
+%
+%\bibitem[LB Data Catalog]{LB Data Catalog}
+%City of Long Beach (2013) GIS Data Catalog.  Accessed 1 March 2013. 
+%\url{http://www.longbeach.gov/tsd/gis/data_catalog.asp}.
+%
+%\bibitem[KFReport]{KFReport}
+%Knight Foundation (2010) Knight Soul of the Community 2010: Why People Love Where They Live and Why it Matters: A National Perspective.
+%
+%\bibitem[KFDoc]{KFDoc}
+%Knight Foundation (2010) Knight Foundation Soul of the Community: Data Documentation.
+%
+%\bibitem[LBPort]{LBPort}
+%Port of Long Beach (2013) About the Port. Accessed 12 September 2013.
+%\url{http://www.polb.com/about/default.asp}.
+%
+%\bibitem[Quillian]{Quillian and Pager}
+%Quillian, L, Pager, D (2010) Estimating Risk: Stereotype Amplification and the Perceived Risk of Criminal Victimization. Soc Psychol Q.  73(1): 79–104.
+%
+%\bibitem[CenFacts]{CenFacts}
+%U.S. Census Bureau (2013). State and County Quick Facts. Accessed 12 September 2013.
+%\url{http://quickfacts..gov/qfd/states/06/0643000.html}.
+%
+%\end{thebibliography}
+
+\end{document}
+% end of file template.tex
+

@@ -1,0 +1,408 @@
+\RequirePackage{fix-cm}
+
+\documentclass{svjour3}          
+
+\smartqed  
+
+\usepackage{graphicx}
+\usepackage{natbib}
+\usepackage{hyperref}
+\usepackage{float}
+\usepackage{subfig}
+\usepackage{wrapfig}
+\usepackage{rotating}
+\usepackage{lscape}
+\usepackage{multirow}
+\usepackage{url}
+\usepackage{mathtools}
+\usepackage{tabularx}
+\usepackage{amsmath}
+\usepackage{float}
+
+\begin{document}
+
+\title{Soul of the Community: An Attempt to Assess\\ Attachment to a Community}
+
+\author{Anna Quach
+\and J\"urgen Symanzik
+\and Nicole Forsgren 
+}
+
+\institute{Anna Quach \at
+  Utah State University,
+	Department of Mathematics and Statistics,
+	3900 Old Main Hill,
+	Logan, UT 84322--3900,
+	USA. \\
+           Tel.: 208-316-2798\\
+          \email{aquach4@gmail.com}           
+%             \emph{Present address:} of F. Author  %  if needed
+           \and
+           J\"urgen Symanzik \at
+           Utah State University,
+	Department of Mathematics and Statistics,
+	3900 Old Main Hill,
+	Logan, UT 84322--3900,
+	USA.\\
+	Tel.: 435-797-0696,\\
+	Fax: 435-797-1822,\\
+          \email{symanzik@math.usu.edu}           %  \\
+%             \emph{Present address:} of F. Author  %  if needed
+          \and
+	Nicole Forsgren \at
+	Utah State University,
+	Department of Management Information Systems,
+	3515 Old Main Hill,
+	Logan, UT 84322--3515,
+	USA.\\
+	Tel.:  435-797-3479,\\
+	Fax: 435-797-2351,\\
+	\email{nicolefv@gmail.com}	
+}
+
+\date{Received: date / Accepted: date}
+
+\maketitle
+
+\begin{abstract}
+In this article, we work with data from the Soul of the Community survey project that was conducted by the Knight Foundation from 2008 to 2010. Overall, 26 communities across the United States with a total of more than 47,800 participants took part in this study. Each year, around 200 different questions were posed to each participant. One key variable is attachment to one's community. In our article, we provide an assessment via various machine learning algorithms which factors may have an effect on attachment.
+\keywords{Random Forests \and Archetypes \and Knight Foundation \and Community Attachment}
+\end{abstract}
+
+\section{Introduction}\label{1}
+From 2008 to 2010, the Knight Foundation \citep{kf} conducted the Soul of the Community (SOTC) study \citep{soul}. The Knight Foundation is a foundation that supports transformational ideas, helps communities succeed, invests in civic innovations, and promotes civic innovation and robust engagement. Together with Gallup, they collected data from more than 47,800 participants from 26 communities across the United States. But, unfortunately, the 26 communities were not randomly selected. Rather, these are all the communities where the Knight Foundation has been active in the past \citep{kfabout}. The participants were given a survey with more than 200 questions each year. The questions asked for demographic information, the participants' feelings towards their community, location, and much more.
+\newline
+\indent
+Our analysis was conducted as part of the bi-annual 2013 Data Expo competition of the Sections on Statistical Graphics and Statistical Computing of the American Statistical Association (ASA). Additional details of the 2013 Data Expo can be found at \citet{dataexpo} and in \citet{editorial}. \citet{jsm}  contains our preliminary attempt to assess attachment to a community. Overviews of other, recent Data Expos can be found in \citet{dataexpo10}, \citet{dataexpo11} and \citet{dataexpo14} for the 2006, 2009, and 2011 Data Expos.
+\newline
+\indent
+The goal of our analysis was to find factors that foster attachment to one's community. Prior to our detailed analysis, data cleaning in the three data sets was conducted, resulting in excluded variables and cases (as presented in Appendix~\ref{AppendixA}).  Following this data cleaning, our analysis revealed the important factors that impact attachment to particular communities as well as attachment to communities as a whole. We also examined if there were differences in attachment between communities as well as demographics. Using archetypal analysis, we identified similarities among people that are attached or not attached to their community. Finally, we compared our results to previous research. 
+\newline
+\indent
+Figure~\ref{map} shows a map of the 26 communities involved in the SOTC survey project. The map reveals that most communities are located in the eastern United States. Participating communities range from cities with more than one million inhabitants (such as Philadelphia, Pennsylvania) to rural communities with less than 20,000 inhabitants (such as Milledgeville, Georgia). The number of people surveyed in each community and the sample size following data cleaning can be found in the dot chart in Figure~\ref{samplesize} in Appendix~\ref{AppendixA}. 
+
+\begin{figure}[h!]
+   \centering
+	 \includegraphics[width=.95\linewidth]{map.png}   
+	 \caption{\label{map} Locations of the 26 communities involved in the SOTC project, overlaid on a Google map.} 
+\end{figure}  
+
+Our article is arranged as follows: An overview of machine learning algorithms applied to the SOTC data follows in Section~\ref{3}. Results for random forests and an archetypal analysis are provided in Sections~\ref{4} and~\ref{7}, respectively. One particularly interesting community, Gary, Indiana is further explored using parallel coordinate plots in Section~\ref{pcp}. A graphical summary of some of the most interesting variables via dot charts and our conclusion is provided in Section~\ref{8}. Possible future work is outlined in Section~\ref{future}. The software we used is summarized in Section~\ref{9}. In Appendix~\ref{AppendixA}, we describe our data cleaning steps. Appendix~\ref{AppendixB} contains two tables with predictor variables and additional variables that summarize all variables and their abbreviations used in this article. See \url{https://github.com/COSTDataExpo2013/QuachSymanzikForsgren} for all R code used and files required to reproduce this manuscript.
+
+\section{Machine Learning Algorithms}\label{3}
+As stated before, the goal of our analysis was to find factors that foster attachment to one's community. A subgoal was to find a method that would allow us to predict the attachment level in each of the three years with the lowest classification error, but we also wanted to be able to interpret the results produced by the different methods. In general, there is a tradeoff between prediction accuracy and model interpretability. We used the following algorithms to predict the attachment level in each of the three years: random forests, SVM (Support Vector Machines), multiple LDA (Linear Discriminant Analysis), and RPART (Recursive Partitioning And Regression Trees). We chose these four classifiers because SVM and random forests are generally known to be the best classifiers \citep{classifiers} and RPART and LDA are traditional classification methods. 
+\begin{itemize}
+\item Random forests is a powerful statistical classifier that uses bootstrap samples (repeated sampling with replacement from the learning set) and randomness in the tree-building procedure \citep{breiman}. The random forests algorithm begins with growing a forest of many trees to a data set. A tree is grown on each independent bootstrap sample from the training data. At each node, a small number of randomly selected variables is used for binary partitioning and the best split on the selected variables is found. The trees are grown to maximum depth and each tree is used to predict the observations that were not in the bootstrap sample. The predicted class of an observation is calculated by the majority vote of the out-of-bag predictions for that observation.
+
+\item A SVM model uses lines in two dimensional space and hyperplanes in higher dimensions to separate points optimally by maximizing the margin around the separating hyperplanes \citep{svm}. The idea of a linear separator can be extended to nonlinear separators by transforming the data to map into a new space by using a kernel function. A nonlinear boundary using the radial basis kernel function was applied.
+
+\item LDA is a statistical technique that finds a linear combination of features to separate or classify two or more classes \citep{lda}. LDA is one of the commonly used techniques for data classification and dimensionality reduction. LDA uses information from the independent variables to achieve the clearest possible separation or discrimination between or among groups. LDA maximizes the ratio of the between-class variance to the within-class variance in order to maximize separability. 
+
+\item RPART is a decision tree that builds classification or regression models and is widely used for problems where the variables do not meet the usual assumptions, such as normality \citep{cart}. The decision tree is constructed by either splitting or not splitting each node on the tree into two daughter nodes. To do the splitting on continuous variables, the cutoff value is the value that is best in discriminating between the groups in question and partitioning is similar for discrete variables. This procedure is done recursively by applying the same criteria to the subgroups.
+\end{itemize}
+
+LDA and RPART are more interpretable, but not as flexible \citep{isl} as the other two methods. SVM and random forests are less interpretable but are more flexible than RPART and LDA. Random forests is more interpretable than SVM because it provides variable importance in addition to the predicted values.
+
+10-fold cross validation is used to tune the parameter(s) in random forests, SVM, and RPART in order to minimize the misclassification error. 10-fold cross validation randomly splits the cases into ten parts and uses nine out of the ten parts (training set) to build the model and uses the part left out (test set) to test how well the model was fit by computing the misclassification error. Each of the ten parts is used as a test set and the other ten out of ten parts are used as the training sets. The final misclassification error is the average of the ten misclassification errors. 
+
+This procedure was conducted using the R package caret. The tuned parameters for each algorithm can be found in Table~\ref{parameters}.  
+
+\begin{table}[h!]
+\begin{center}
+\caption{\label{parameters} Table of the parameters required to tune each of the machine learning algorithms used in predicting the three level categorical response variable, ``attachment status". mtry is the number of variables randomly chosen out of the 54 predictor variables to split at each node \citep{rf}. sigma is a parameter from the radial basis kernel function \citep{kernlab}. C is the cost of constraints violation parameter \citep{kernlab}. cp is the complexity parameter \citep{cart}.}
+\begin{tabular}{c | c | c | c }
+\multicolumn{1}{ c| }{Algorithm} & 2008 & 2009 & 2010 \\ \cline{1-4} 
+\hline
+Random forests & mtry = 6 & mtry = 7 & mtry = 4  \\ \hline
+SVM & C = 2, sigma = .001 & C = 1, sigma = .001 & C = 1, sigma = .01 \\ \hline
+LDA & NA & NA & NA \\ \hline
+RPART & cp = 0.01 & cp = 0.01 & cp = 0.01 
+\end{tabular}
+\end{center}
+\end{table}
+
+Each algorithm's misclassification error rate is given in Table~\ref{alg}. The misclassification error rate for each statistical method was found to be approximately equal. We selected random forests to predict attachment because it has one of the lowest error rates for each of the three years and it is more interpretable than SVM. 
+
+\begin{table}[h!]
+\begin{center}
+\caption{\label{alg} Table of the machine algorithms used in predicting the three level categorical response variable, ``attachment status."}
+\begin{tabular}{c | c | c | c }
+\multicolumn{1}{ l| }{} & \multicolumn{3}{ c }{Error Rate} \\ \cline{2-4}
+\multicolumn{1}{ c| }{Algorithm} & 2008 & 2009 & 2010 \\ \cline{1-4} 
+\hline
+Random forests & 0.31 & 0.30 & 0.29  \\ \hline
+SVM & 0.31 & 0.31 & 0.30 \\ \hline
+LDA & 0.32 & 0.33 & 0.31 \\ \hline
+RPART & 0.35 & 0.35 & 0.36 
+\end{tabular}
+\end{center}
+\end{table}  	
+
+ \section{Random Forests Results}\label{4}
+The values in Table~\ref{parameters} determined using 10-fold cross validation for the tuning parameter, mtry, for each year controlling for community lived in, are used in our final model. In addition, 5000 trees were used and determined in each model (where the overall misclassification error rate is approximately constant and unchanging) and in each year in the final model. The variable importance plot for each year can be found in Figure~\ref{rf}. The variable importance for classification problems is measured by the mean decrease in accuracy. The mean decrease in accuracy is defined to be the average of the difference of the number of votes in the correct class between the permuted out-of-bag data and the untouched out-of-bag data \cite{rfweb}. The out-of-bag data is the third of the data that is left out in building the trees and is used to run the predictor variables down the tree to obtain the predicted values and the out-of-bag error rate. Variables with larger mean decrease in accuracy are ranked higher in importance in predicting attachment. To find a cutoff point, we look for drops or large gaps between the points and keep the variables before the drop or gap. 
+
+In the year 2008 results found in Figure~\ref{rf}, the analysis suggests keeping four variables --- q5 (if you had the choice of where to live would you rather ...), q3c (the community has a good reputation to outsiders or visitors who do not live here), q6 (how would you compare how the community is as a place to live today compared to five years ago?), and q8d (feelings towards families with young children?). In 2009, we should keep one variable, q3c, and in 2010 we should keep two variables ---  q3c and q6 --- or three variables --- adding q5. q3c, q6, and q5 appear to be important variables in all three years, suggesting some consistency in the data across all three years. These variables will be further investigated in the following sections.
+
+The heatmaps \citep{eisen} in Figure~\ref{heatmap} show the results of the most important predictors in all communities combined (labeled OVERALL) and in each of the 26 communities in each year totaling $(26+1)*3 = 81$ models fitted. The dotchart on the right of each heatmap shows the out-of-bag misclassification error for each community and the combined communities. The variables are ordered by the frequency with which they are ranked as the four most important variables among all communities and in each community in the three years. The communities in all three heatmaps are ordered from the smallest to largest misclassification error from the 2008 sampled data. Observe that the most important predictor variable for a community is colored in dark red. Our analyses show that q3c is the most important variable in predicting attachment with q5, q6, q8d, and q7i following. These five variables are also the top five important variables in each year, but not necessarily in the same order, as can be seen in the variable importance plots in Figure~\ref{rf}. The heatmaps in Figure~\ref{heatmap} also show that there are differences among  the communities in what is important in influencing whether individuals are attached, neutral, or not attached to their community. In addition, pairwise scatterplots (shown in Figure~\ref{scatter}) of the misclassification error rates for the three years were positively correlated, with correlation coefficients of 0.70, 0.47, and 0.69 between the years 2008 and 2009, 2008 and 2010, and 2009 and 2010, respectively. Gary, Indiana, is the most unusual community with respect to the misclassification error rate of 0.25 or less, which is the smallest rate among all other communities in each year. Further analyses of Gary, Indiana, can be found in Section~\ref{pcp}.
+
+While most of the important predictor variables consistently occur in a community in all three years, there are changes over time. Some of these changes are further examined in Section~\ref{8}.
+
+\clearpage
+
+\begin{figure}[h!]
+  	\begin{center}
+        \includegraphics[height=.5\linewidth]{rf2008.png}\\
+        \includegraphics[height=.5\linewidth]{rf2009.png}\\
+        \includegraphics[height=.5\linewidth]{rf2010.png}  
+		\end{center}  
+\caption{\label{rf} Random forests variable importance plot of the top-12 variables out of 54 predictor variables (with community fitted as a covariate) with the largest mean decrease in accuracy for the years 2008, 2009, and 2010. See Table~\ref{imp} in Appendix~\ref{AppendixB} for the meaning of each variable.}
+\end{figure} 
+
+\clearpage
+
+\begin{figure}[h!]
+	\begin{center}
+   \includegraphics[height=.49\linewidth]{heatmap2008.png}\\
+   \includegraphics[height=.49\linewidth]{heatmap2009.png}\\
+	 \includegraphics[height=.49\linewidth]{heatmap2010.png} 
+	\end{center}
+	\caption{Heatmaps of the random forests results (left) revealing the ranking of the important predictor variables in predicting attachment among all communities (labeled OVERALL) and in each community in each year. Variables (top 4 most important in each of the 81 models) are sorted from most frequent to least frequent occurrence in all communities and in each community in the three years. Communities are sorted according to the smallest misclassification error rate to the largest misclassification error rate in 2008. The misclassification error rates of the random forests results for each model are shown on the right. Note that the heatmap is truncated at 12 variables (out of the 18 variables that were determined to be important in at least one of the communities). See Table~\ref{imp} in Appendix~\ref{AppendixB} for the meaning of each variable.}\label{heatmap}
+\end{figure}
+
+\clearpage
+
+\begin{figure}[h!]
+	\begin{center}
+           \includegraphics[height=0.8\linewidth]{PairsPlot_MisclassificationError.png}
+	\end{center}
+	\caption{Pairwise scatterplots of misclassification error rates from the random forests results in Figure~\ref{heatmap} for the three years.}\label{scatter}
+\end{figure}
+
+\section{Parallel Coordinate Plots}\label{pcp}
+
+We further investigate Gary, Indiana, because of its unusually low misclassification error rate compared to the other 25 communities in each year according to Figures~\ref{heatmap} and~\ref{scatter}. We applied random forest using the same number of variables to split at each node as determined in Table~\ref{parameters}. Five thousand trees were used and determined in each model (where the overall misclassification error rate is approximately constant and unchanging and the variable importance plot is stable) and in each year in the final model. Figure~\ref{garyrf} shows the variable importance plots for Gary, Indiana, for the years 2008, 2009, and 2010. In the year 2008 results, the analysis suggests keeping three variables --- q3c (the community has a good reputation to outsiders or visitors who do not live here), q8d (feelings towards families with young children?), and q7i (the community is a good place to meet people and make friends). In 2009, we should keep five variables --- q3c, q9 (how would you rate economic conditions in your community today?), q8a (feelings towards young talented college graduates looking to enter the job market?), q8d, and q6 (how would you compare how the community is as a place to live today compared to five years ago?). In 2010 we should keep two variables ---  q3c and q6. q3c appear to be the important variable in all three years, suggesting some consistency in the data from all three years. These variables will be further investigated in the following sections. In comparison to our results from Figure~\ref{heatmap}, q3c is also the most important variable across all three years. Variables found important in Gary, Indiana, out of the three years that were not in the top five most important variables in Figure~\ref{heatmap} are q9 and q8a.
+
+We used parallel coordinate plots in order to determine whether there are distinct patterns in the response to the survey in Gary, Indiana. Parallel coordinate plots are used to visualize high dimensional data in a compact way \citep{inselberg, wegman}. A parallel coordinate plot is produced by using a vertical axis for each variable. All vertical axes are drawn parallel to each other. An observation is represented by a point on each axis and points are connected by a polyline. Each polyline represents one observation. 
+
+The variables that are shown in the parallel coordinate plots in Figure~\ref{gary} are the top 12 important variables as determined by the results from our random forest analysis in Figure~\ref{garyrf}. Each variable is a categorical variable. Therefore, we jittered, that is, we added a little noise to the data to avoid lines overlapping at discrete points for each variable. The parallel coordinate plot for Gary, Indiana, for the years 2008, 2009, and 2010 are shown in Figure~\ref{gary}.
+
+We can see in Figure~\ref{gary} that the overall patterns for the three years for the variable q3c for Gary, Indiana, are quite similar. That is, those that are attached to the community think that their community has a good reputation and those that are unattached strongly disagree that their community has a good reputation. The responses of those that are neutral fall in between the responses of those that are attached and those that are unattached to this community. 
+
+The overall pattern for those that are attached across the three years want to stay in their community (q5) and have positive feelings about their communities, such as thinking that their community is a good place to meet new people and make friends (q7i), and their feelings towards families with young children in their community is very good (q8d). The majority of those that are not attached would rather move outside of their community and state (q5) and have negative feelings about their community, such as, feeling that their community is not a good place to meet new people and make friends (q7i) and thinking that families with young children in their community is not good (q8d). The responses of those that are neutral fall in general in between those that are attached and unattached to their community.
+
+\begin{figure}[h!]
+  	\begin{center}
+                    \includegraphics[height=.5\linewidth]{gary2008VIplot.png}\\
+                    \includegraphics[height=.5\linewidth]{gary2009VIplot.png}\\
+                    \includegraphics[height=.5\linewidth]{gary2010VIplot.png}  
+		\end{center}  
+\caption{\label{garyrf} Random forests variable importance plot of the top-12 variables out of 54 predictor variables with the largest mean decrease in accuracy for Gary, Indiana, for the years 2008, 2009, and 2010. See Table~\ref{imp} in Appendix~\ref{AppendixB} for the meaning of each variable.}
+\end{figure} 
+
+\begin{figure}[h!]
+		\begin{center}
+                    \includegraphics[height=.5\linewidth]{Gary08pcp.png}\\
+                    \includegraphics[height=.5\linewidth]{Gary09pcp.png}\\
+                    \includegraphics[height=.5\linewidth]{Gary10pcp.png}  
+		\end{center}  
+\caption{\label{gary} Parallel coordinate plots for Gary, Indiana, for the years 2008, 2009, and 2010. Variables are ordered from most important (on the left) to the least important (on the right) as determined by the random forests algorithm. The values on the y-axis range from the minimum value among all the variables to the maximum value among all the variables. See Table~\ref{imp} in Appendix~\ref{AppendixB} for the meaning of each variable.}
+\end{figure} 
+
+\clearpage
+
+\section{Archetypal Analysis}\label{7}
+Characterizing communities with similar attachment status is of interest. A typical way to approach this problem is to apply k-means cluster analysis. However, k-means assumes there are obvious separations between clusters within the data set. An alternative approach is the use of archetypal analysis that does not make any assumptions about the separation between clusters. Archetypal analysis was first introduced in \cite{arch} as a variant of principal component analysis (PCA). Instead of redefining a new set of orthogonal axes as in PCA, a convex set with k vertices that approximates the convex hull, a data set boundary, is fitted to data in higher-dimensional space and is chosen by minimizing the squared error between data and the approximate convex hull. The archetypes are restricted to lie on the convex hull. A convex hull can have anywhere from two archetypes to the number of cases in the data set. We used archetypal analysis to identify extreme or unusual sets of communities within the data in the year 2008 and investigated what made these particular communities similar or dissimilar to other communities with respect to their attachment status. \\
+\indent
+The variables used in our archetypal analysis are: q3c (the community has a good reputation to outsiders or visitors who do not live here), q5 (if you had the choice of where to live would you rather...), q6 (how would you compare how the community is as a place to live today compared to five years ago), q8d (families with young children), q7i (being a good place to meet people and make friends), q7m (how much people in your community care about each other) as determined by the results from our random forests analysis shown in Figure~\ref{heatmap}. Cases missing in any of the six variables were removed, giving a sample size of 13,256, 13,728, and 15,387 cases for the years 2008, 2009, and 2010, respectively. Averages were then computed for each variable for each community. Thus, the archetypal analysis represents the average of the responses of each community in the data as a mixture of archetypes. The number of archetypes to keep is done by referencing a scree plot (a plot of the residual sum of squares for each archetype). In our case, the scree plot suggested two, five, seven, or eight pseudo-clusters for the year 2008, two or six pseudo-clusters for the year 2009, and two, three, five, or seven pseudo-clusters for the year 2010. However, cluster membership in the three-cluster solution was the most interpretable and, therefore, we kept a three pseudo-cluster solution. \\
+\indent
+A visualization of the convex hull of our archetypal analysis in the base year (2008) is shown in Figure~\ref{archgon} and an interpretation of the extreme communities is shown in Figure~\ref{arch_dotchart}. The visualization of the following two years (2009 and 2010) for both, the archetypal analysis and the dotchart, resembled quite closely to the base year and are not shown here. In the triangular plot in Figure~\ref{archgon}, the three points labeled 1, 2, and 3 are the archetypes and communities closest to any of the three archetypes are the extremes or unusual communities. Communities are colored by the dominating group between the three attachment status levels. One tie occurred between those that are neutral and attached in Long Beach, California, and was handled by categorizing that community as neutral. Communities closer to archetype 1 (Gary, Indiana; Detroit, Michigan; Miami, Florida) are dominated by those who are unattached to their community. Those communities closer to archetype 2 (Grand Forks, North Dakota; Columbus, Georgia; Aberdeen, South Dakota) display a mixture of attachment status and the few communities closest to archetype 3 (Bradenton, Florida; Biloxi, Mississippi) are attached to their community. To describe the archetype itself, we reference the dot chart in Figure~\ref{arch_dotchart}. The points in the dot chart represent the percentile for each archetype for each variable as compared to the average response to each community. For example, for archetype 1 variable q3c, the percentile is 11\%, indicating that the q3c value in archetype 1 is in the 11th percentile among the average responses for the 26 communities in the 2008 data. This would mean that communities closer to archetype 1 would respond  to``strongly disagree" to q3c, that is, when asked if they think their community has a good reputation to outsiders or visitors who do not live in their community. Summarizing using the percentile profile dotchart, all archetypes are describing communities that want to move out of their city and state altogether (q5) and think that their community is much worse today than five year ago (q6). The differences lie in the variables, q3c, q8d, q7i, and q7m. For those particular variables, archetype 1 can be described as having negative feelings about their community and archetype 2 and 3 are the opposite of this, that is, having more positive feelings. 
+
+\begin{figure}[h!]
+\centering
+\includegraphics[height=0.65\linewidth, trim = 0 1.4in  0 0.5in, clip]{archetype_convex_hull_2008.png} 
+\caption{Graphical representation of the three archetype solution for the year 2008. The three points labeled 1, 2, and 3 are the archetypes. Communities are colored by the dominating group according to the three attachment status levels.}\label{archgon}
+\end{figure}  
+
+\begin{figure}[h!]
+\centering
+\includegraphics[height=0.4\linewidth]{percentile_profile_archetypes_2008.png}   
+\caption{Graphical representation to aid with the interpretation of the three archetype solution for the year 2008. The points represent the percentile for each archetype for each variable as compared to the average response to each community. See Table~\ref{imp} in Appendix~\ref{AppendixB} for the meaning of each variable.}\label{arch_dotchart}
+\end{figure}  
+
+\clearpage
+
+\section{Discussion and Conclusion}\label{8}
+Our analysis revealed that there are mainly three variables that are important in determining attachment status. These variables are: q3c (the community has a good reputation to outsiders or visitors who do not live here), q5 (if you had the choice of where to live would you rather ...), and q6 (how would you compare how the community is as a place to live today compared to 5 years ago?). We further investigated these variables in all three years by dot charts (see Figures~\ref{q3c},~\ref{q5}, and~\ref{q6}). The values are column percentages. The column percentages are calculated by first taking the cross tabulation between the class levels and the communities of each variable. Each cell is then divided by its column total. The percentages for each year are combined into one dotchart. There are some big visible temporal differences. For example, in Figure~\ref{q3c} the percentage of respondents in State College, PA, who strongly disagree to q3c (the community has a good reputation to outsiders or visitors who do not live here) in 2009, increased by about 15\% in 2010. However there are not any significant differences in the class level between the three years. We verified that these are not true changes over time using a goodness-of-fit test and adjusting the p-value using Bonferroni correction, that is multiplying each p-value by 26 and comparing it to a 0.05 level of significance. 
+\newline
+\indent
+There are some communities that are rather unusual (when compared to the other communities) with respect to some of the predictor variables. Figure~\ref{q3c} shows that in Gary, Indiana, more than 40\% of the participants in each year strongly disagree with q3c (the community has a good reputation to outsiders or visitors who do not live here). Detroit, Michigan, also has a majority of participants (strongly) disagreeing with the community having a good reputation to outsiders or visitors. Top-places with a high response in strong agreement that their community has a good reputation are Bradenton, Florida, and State College, Pennsylvania, with about 80\% in categories 4 and 5.
+\newline
+\indent
+Figure~\ref{q6} shows that the community that had the most satisfied residents with the recent development of their community is Columbus, Georgia, with the highest percentage of the people in the community each year answering 5 (much better) to the question q6 (how would you compare how the community is as a place to live today compared to five years ago). In Detroit, Michigan, approximately 50\% of the participants chose 1 (much worse) or 2 (second to worse) as their answer. Apparently, this can be interpreted as the long--term decline of this city that eventually resulted in its bankruptcy in July 2013 \citep{detroit}. Although most participants in Detroit, Michigan, felt that their community is much worse as a place to live today than five years ago, when asked if they had a choice of where to live (q5), the majority response was to stay in their neighborhood according to Figure~\ref{q5}. In fact, the majority in all communities prefer to stay in their neighborhood, that is, keeping the status quo. An explanation as to why many people in certain communities (Detroit, Michigan, and Gary, Indiana) feel negative about their community, but would rather stay in their community, would be of interest, but is not further investigated here.  
+\newline
+\indent
+Overall, we found that q3c was the most important variable in predicting attachment for most communities, but not for all. Those that answered strongly agree to q3c (the community has a good reputation to outsiders or visitors who do not live here) were attached to their community, and those that answered strongly disagree were not attached to their community. The next four most important variables (in numerical order) were q5, q6, q8d, and q7i.
+\newline
+\indent
+In contrast, a previous study \citep{soularticle} concluded: ``The Knight Foundation's Soul of the Community project found that there is a strong, positive correlation between residents' attachment to their community and economic growth in that community. It also found that the qualities that most attach people to the place they live are aesthetics (the natural and manmade beauty of a place), social offerings (exciting opportunities to socialize with old friends and make new ones), and openness (how welcoming a place is to diverse groups of people)." However, our findings differed considerably.  From the two variables (q7a and q7b) that make up aesthetics, neither one was among our top--five variables; from the three variables (q7h, q7i, and q7m) that make up social offerings, only q7i was among our top--five variables; and from the six variables (q8a, q8b, q8c, q8d, q8e, and q8f) that make up openness, only q8d was among our top--five variables. See Table~\ref{imp} and~\ref{othervars} in Appendix~\ref{AppendixB} for the meaning of each variable. Neither q7i nor q8d was our single most important predictor of attachment.
+
+\begin{figure}[h!]
+  \includegraphics[height=.9\textheight]{q3c.png}
+	\caption{\label{q3c} Dot chart of the most important predictor variable (q3c). Points represent the percentage of people who responded in the community in that year.} 
+\end{figure}
+
+\begin{figure}[h!]
+	\includegraphics[width=1\linewidth]{q5.png}
+	\caption{\label{q5} Dot chart of the second most important predictor variable (q5). Points represent the percentage of people who responded in the community in that year.}\label{dotchart}
+\end{figure}
+
+\begin{figure}[h!]
+	\includegraphics[width=1\linewidth]{q6.png}
+	\caption{\label{q6} Dot chart of the third most important predictor variable (q6). Points represent the percentage of people who responded in the community in that year.} 
+\end{figure}
+
+\indent
+Overall, people who have positive things to say about their community were also attached to their community and wanted to stay within their neighborhood, and those who were negative about their community were not attached to their community and would move to another city or state altogether if they could.
+
+\section{Future Work}\label{future}
+There was a large number of missing values in all three data sets that were provided by the Knight Foundation. Some cases with large amounts of missing values in the majority of the variables were assumed to be those that hung up the phone before they could complete the survey. Thus, future work includes imputing missing values. Furthermore, the imputed data versus the deletion of cases should be compared. The reasons for missing values are of interest and should be investigated further. 
+\newline
+\indent
+From some of our findings, some people in the study felt negatively about their community, but when asked if they would move if they could, they responded that they would stay in their community. Those individuals with low community attachment who choose to remain in their community also warrant further investigations.
+
+\section{Software and R Packages Used}\label{9}
+Our analysis and all data visualizations were done in R 2.15.3. R \citep{R} is a free software environment for statistical computing and graphics that can be downloaded at \url{http://cran.us.r-project.org/}.
+The following R packages were used: archetype (Adele Cutler's version that is not available in R), caret \citep{caret} (for svm, random forests, rpart, lda), ggmap \citep{ggmap}, ggplot2 \citep{ggplot2}, GGally \citep{ggally}, maps \citep{maps}, plyr \citep{plyr},  randomForest \citep{rf}, RColorBrewer \citep{color}, scales \citep{scales} (for archetype), and stats \citep{R}. 
+
+\appendix
+\normalsize
+\section{Appendix} \label{AppendixA}
+A number of variables and cases were removed prior to our analyses. Variables were removed for the following reasons: (i) Variables with a large number of missing responses (more than 45\%) among the cases were excluded. (ii) When variables were provided as 5--level variables and also as aggregated 3--level variables (variables names ending with an r), the aggregated 3--level variables were removed as they provided less nuanced information. (iii) Variables not observed in all three years were excluded for comparison purposes. (iv) All index variables (see Table~\ref{derivation}) were removed, assuming that the variables that were aggregated into an index variable would show up together if the index variable is an important predictor variable. Including the index variables that are linearly dependent on the variables they were derived from creates issues in some of the models we used. We determined how the index variables were derived by using PCA. (v) Finally, all variables were removed that form the basis for ``Community Attachment'' (which is one of our main response variables). For (iv) and (v), PCA was conducted. Ultimately, 55 variables were retained for our analysis from the original 179 (2008), 195 (2009), and 229 (2010) variables, respectively.
+\newline
+\indent
+After the removal of variables, cases were removed for the following reasons: (i) Cases with at least one missing value in the remaining variables were removed. (ii) Answers such as ``don't know'', ``refuse to answer'', or ``did not answer the question'' in the survey were replaced as missing and then were handled according to (i). Figure~\ref{samplesize} shows the effect of data cleaning for the sample sizes in each community in each year. Although steps (i) and (ii) sound rigorous, in most communities/years, only a few cases had to be deleted. Notice that communities with considerable decreases in sample size after data cleaning were mostly urban communities (such as Philadelphia, Pennsylvania, Miami, Florida, and San Jose, California, in 2008 and Charlotte, North Carolina, Akron, Ohio, and Detroit, Michigan, in 2009). An explanation of why we see these dramatic changes in urban communities following data cleaning would be interesting, but has not been investigated here. 
+\newline
+\indent
+Figure~\ref{missing} provides a graphical representation of the variables and cases that were removed from further analysis. Overall, the largest number of cases were removed from the 2010 data set, but the original sample size that year was approximately 50\% larger than the sample sizes in 2008 and 2009.
+
+\begin{figure}[h!]
+\centering
+\includegraphics[width=.85\linewidth]{SampleSizes.png}
+\caption{Dot chart of the sample size in each year for each community before and after data cleaning.}\label{samplesize}
+\end{figure}
+
+\begin{table}[h!]
+\centering
+\caption{Table of the formulation of the 15 index variables (variables calculated by taking the mean of several variables) found using PCA. More information about these variables can be found in Table~\ref{imp} and Table~\ref{othervars} in Appendix~\ref{AppendixB}.}\label{derivation}
+\begin{tabular}{l p{3.5 in}}
+Index Variable & Derivations of Index Variable \\ 
+\hline
+Community Attachment & (Community Loyalty + Community Passion)/2 \\
+Community Loyalty & (qce1 + qce2 + q6a)/3\\
+Community Passion & (q3a + q3b)/2\\
+Basic Services & (q7cr + q7dr + q7kr)/3\\
+Leadership & (q7lr + q15abr)/2\\
+Education & (q7fr + q7gr)/2\\
+Safety & (q18r + q19r)/2\\
+Aesthetics & (q7ar + q7br)/2\\
+Economy & (q7er + q9r + q10r + q14r + q15r + q15aar)/6\\
+Social Offerings & (q7hr + q7ir + q7mr)/3\\
+Community Offerings & (Basic Services + Aesthetics + Safety + Economy + Social Offerings + Education + Leadership)/7\\ 
+Civic Involvement  & (q22ar + q22br + q22cr + q22dr)/4\\
+Openness  & (q8ar + q8br + q8cr + q8dr + q8er + q8fr)/6\\
+Social Capital  & (q23r + q24r + q25r + q26r)/4\\
+Community Domains  & (Community Offerings + Civic Involvement + Openness + Social Capital)/4\\
+\hline
+\end{tabular}
+\end{table}
+
+\begin{figure}[h!]
+  \begin{center}
+	\includegraphics[width=.85\linewidth]{Missing2008.png} \\
+	\includegraphics[width=.85\linewidth]{Missing2009.png} \\
+	\includegraphics[width=.85\linewidth]{Missing2010.png}
+	\end{center}
+	\caption{Heatmaps showing missing data in each year. Also shown are cases and variables
+removed from further analysis (further explained in the main text).}\label{missing}
+\end{figure}  
+
+\clearpage
+
+\section{Appendix} \label{AppendixB}
+Appendix \ref{AppendixB} summarizes the predictor variables in Table~\ref{imp} and lists additional variables related to the index variables in Table~\ref{othervars}. The variables in bold in Table~\ref{imp} are the variables that are found to be the three most important predictor variables in predicting attachment status. The table also lists some of the variables that make up the index variables in Table~\ref{derivation}. Table~\ref{othervars} lists the remaining variables and descriptions used to make up the index variables in Table~\ref{derivation}.  
+
+\begin{table}[h!]
+\begin{center}
+\caption{\label{imp}  Table of predictor variables. Unless specified differently, all variables in this table used levels 1 to 5 with 1 - Very bad $\ldots$ 5 - Very good (and 1 - Low, 2 - Medium, 3 - High for the aggregated 3--level ``r'' variables).}
+\begin{tabular}{l | p{4in}}
+Variable & Description \\ 
+\hline                                                                                                                                                                                                                                    
+\textbf{q3c} & The community has a good reputation to outsiders or visitors who \newline do not live here \newline 1 - Strongly disagree $\ldots$ 5 - Strongly agree  \\      
+\textbf{q5} & If you had the choice of where to live would you rather \newline 1 - stay in your neighborhood 2 - move to another neighborhood \newline3 - Move outside of your community 4 - Move to another city and state     \\      
+\textbf{q6} & How would you compare how the community is as a place to live today \newline compared to five years ago \newline  1 - Much worse $\ldots$ 5 - Much better \\                                                                                   
+q7a(r) & The availability of outdoor parks, playgrounds, and trails \\
+q7b(r) & The beauty or physical setting \\                                                                                                                                                                                                                                                        
+q7c(r) & The highway and freeway system \\
+q7e(r) & The availability of job opportunities  \\                                                                                
+q7f(r) & The overall quality of public schools in your community \\                                                               
+q7g(r) & The overall quality of the colleges and universities \\                                                                                                                                                                                                                       
+q7i(r) & Being a good place to meet people and make friends  \\
+q7l(r) & The leadership of the elected officials in your city  \\                                                  
+q7m(r) & How much people in your community care about each other \\                                                      
+q8a(r) & Young talented college graduates looking to enter the job market  \\                                                   
+q8d(r) & Families with young children  \\ 
+q8f(r) & Senior citizens  \\ 
+q9(r) & How would you rate economic conditions in your community today \\  
+q15aa(r) & Now is a good time to find a job in my area \newline 1 - Strongly disagree $\ldots$ 5 - Strongly agree \\
+q15ab(r) & The leaders in my community represent my interests \newline  1 - Strongly disagree $\ldots$ 5 - Strongly agree   \\
+\hline
+\end{tabular}
+\end{center}
+\end{table}
+
+\clearpage
+
+\begin{table}[h!]
+\begin{center}
+\caption{\label{othervars} Table of additional variables that make up the index variables in Table~\ref{derivation}.}
+\begin{tabular}{l | p{4in}}
+Variable & Description \\ 
+\hline 
+qce1 & Taking everything into account how satisfied are you with the community as a place to live \\    
+qce2 & How likely are you to recommend the community to a friend or associate as a place to live  \\    
+q6a & And thinking about five years from now how do you think the community will be as a place to live compared to today \\    
+q3a & I am proud to say I live in this community  \\     
+q3b & The community is the perfect place for people like me  \\   
+q7dr & The availability of affordable housing \\
+q7kr & The availability and accessibility of quality healthcare \\
+q7hr & Having a vibrant nightlife with restaurants, clubs, bars, etc. \\
+q8br & Immigrants from other countries \\
+q8cr & Racial and ethnic minorities \\
+q8er & Gay and lesbian people \\
+q10r & Right now do you think that economic conditions in your community as a whole are getting better or getting worse  \\    
+q14r & Based on what you know or have seen, would you say that, in general, your company or employer is \\ 
+q15r & How likely are you to agree that your job provides you with the income needed to support your family? \\ 
+q18r & How would you rate how safe you feel walking alone at night within a mile of your home  \\    
+q19r & How would you rate the level of crime in your community  \\                                          
+q22ar & Performed local volunteer work for any organization or group \\    
+q22br & Attended a local public meeting in which local issues were discussed \\    
+q22cr & Voted in the local election \\    
+q22dr & Worked with other residents to make change in the local community \\    
+q23r & How many formal or informal groups or clubs do you belong to in your area that meet at least monthly\\    
+q24r & How many of your close friends live in your community \\    
+q25r & How much of your family lives in this area  \\    
+q26r & How often do you talk to or visit with your immediate neighbors   \\ \hline
+\end{tabular}
+\end{center}
+\end{table}
+
+
+\begin{acknowledgements}
+We would like to thank Dr. Adele Cutler for her input on the methodology of this manuscript and for providing access to her archetype software. In addition, we would like to thank the reviewers for their helpful comments and suggestions. This article was submitted prior to J\"urgen Symanzik becoming Editor-in-Chief of Computational Statistics, and was handled by Yuichi Mori, the previous Editor-in-Chief. 
+\end{acknowledgements}
+
+\bibliographystyle{spbasic}     
+
+\bibliography{references}
+
+\end{document}
